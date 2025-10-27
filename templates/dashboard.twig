@@ -1,0 +1,46 @@
+{% extends "layout.twig" %}
+
+{% block content %}
+<div class="dashboard-container">
+  <header class="dashboard-header">
+    <div class="header-content">
+      <a href="/" class="btn btn-secondary">← Back to Home</a>
+      <h1>Dashboard</h1>
+    </div>
+    <div class="user-info">
+      <span>Welcome, {{ user.name }} ({{ user.email }})</span>
+      <a href="/auth/logout" class="btn btn-secondary">Logout</a>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <div class="dashboard-cards">
+      <a href="/tickets" class="card clickable-card">
+        <h3>Your Tickets</h3>
+        <p>Manage and track your assigned tickets</p>
+      </a>
+      <div class="card disabled-card">
+        <h3>Analytics</h3>
+        <p>View performance metrics and reports</p>
+      </div>
+      <div class="card disabled-card">
+        <h3>Settings</h3>
+        <p>Customize your account preferences</p>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block footer %}
+  <footer class="dashboard-footer">
+    <div class="footer-content">
+      <p>&copy; {{ "now"|date("Y") }} Dennis Ticket Management App. All rights reserved.</p>
+      <p>
+        <a href="/privacy">Privacy Policy</a> | 
+        <a href="/terms">Terms of Service</a> | 
+        <a href="/contact">Contact Us</a>
+      </p>
+    </div>
+  </footer>
+{% endblock %}

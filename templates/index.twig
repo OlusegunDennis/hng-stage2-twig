@@ -1,0 +1,55 @@
+{% extends "layout.twig" %}
+
+{% block content %}
+<div class="landing-page">
+  <!-- Hero Section -->
+  <section class="hero">
+    <!-- Decorative circle with floating animation -->
+    <img src="/assets/circles.svg" alt="Decorative circle" class="circle-1" />
+    
+    <div class="hero-content">
+      <h1>Dennis Ticket Management</h1>
+      <p>Your all-in-one solution for efficient ticket tracking and team collaboration. Streamline your workflow and boost productivity today.</p>
+      
+      <div class="cta-buttons">
+        <a href="/auth/login" class="btn btn-primary">Login</a>
+        <a href="/auth/signup" class="btn btn-secondary">Get Started</a>
+      </div>
+    </div>
+    
+    <!-- Wave background at the bottom of hero -->
+    <img src="/assets/wave.svg" alt="Wave background" class="wave-bottom" />
+  </section>
+
+  <!-- Features Section -->
+  <section class="features">
+    <h2>Powerful Features</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <h3>Easy Ticket Creation</h3>
+        <p>Create and customize tickets in seconds with our intuitive interface. Set priorities, assignees, and due dates effortlessly.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Real-time Collaboration</h3>
+        <p>Work together seamlessly with team members. Get instant notifications and updates on ticket status changes.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Advanced Analytics</h3>
+        <p>Gain insights with detailed reports and analytics. Track resolution times, team performance, and project progress.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer Section -->
+  <footer class="footer">
+    <div class="footer-content">
+      <p>&copy; Dennis Ticket Management App. All rights reserved.</p>
+      <p>
+        <a href="#">Privacy Policy</a> | 
+        <a href="#">Terms of Service</a> | 
+        <a href="#">Contact Us</a>
+      </p>
+    </div>
+  </footer>
+</div>
+{% endblock %}

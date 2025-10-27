@@ -1,0 +1,86 @@
+{% extends "layout.twig" %}
+
+{% block content %}
+<div class="ticket-management-container">
+  <header class="ticket-management-header">
+    <a href="/dashboard" class="btn btn-secondary">← Back to Dashboard</a>
+    <h1>Create New Ticket</h1>
+  </header>
+
+  {% if error %}
+    <div class="message error">{{ error }}</div>
+  {% endif %}
+
+  <div class="ticket-form-container">
+    <form method="POST" action="/tickets/create" class="ticket-form">
+      <h2>Create New Ticket</h2>
+      
+      <div class="form-group">
+        <label for="title">Title *</label>
+        <input
+          type="text"
+          id="title"
+          name="title"
+          class="form-control"
+          placeholder="Enter ticket title"
+          required
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="status">Status *</label>
+        <select
+          id="status"
+          name="status"
+          class="form-control"
+          required
+        >
+          <option value="open">Open</option>
+          <option value="in_progress">In Progress</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea
+          id="description"
+          name="description"
+          class="form-control"
+          placeholder="Enter ticket description"
+          rows="3"
+        ></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label for="priority">Priority</label>
+        <select
+          id="priority"
+          name="priority"
+          class="form-control"
+        >
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+      
+      <div class="form-actions">
+        <a href="/dashboard" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Create Ticket</button>
+      </div>
+    </form>
+  </div>
+
+  <footer class="ticket-management-footer">
+    <div class="footer-content">
+      <p>&copy; {{ "now"|date("Y") }} Dennis Ticket Management App. All rights reserved.</p>
+      <p>
+        <a href="/privacy">Privacy Policy</a> | 
+        <a href="/terms">Terms of Service</a> | 
+        <a href="/contact">Contact Us</a>
+      </p>
+    </div>
+  </footer>
+</div>
+{% endblock %}
