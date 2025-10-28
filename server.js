@@ -12,6 +12,7 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 // Session middleware
 app.use(session({
   secret: 'ticketapp-secret-key',
@@ -20,8 +21,11 @@ app.use(session({
   cookie: { secure: false } // Set to true in production with HTTPS
 }));
 
+// Setup Twig template engine
 app.set("view engine", "twig");
 app.set("views", path.join(__dirname, "templates"));
+
+// Serve static assets (CSS, JS, images)
 app.use(express.static(path.join(__dirname, "public")));
 
 // Simple in-memory stores for demo purposes (in production, use a database)
