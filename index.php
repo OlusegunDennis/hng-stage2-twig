@@ -27,7 +27,7 @@ function is_authenticated() {
 }
 
 // Get current user
-function get_current_user() {
+function get_logged_in_user() {
     return isset($_SESSION['user']) ? $_SESSION['user'] : null;
 }
 
@@ -120,7 +120,7 @@ if ($request_method === 'POST') {
         }
         
         $ticket_id = $matches[1];
-        $current_user = get_current_user();
+        $current_user = get_logged_in_user();
         
         // Find the ticket to update
         $ticket_index = -1;
@@ -178,7 +178,7 @@ if ($request_method === 'POST') {
         
         // Basic validation
         if (empty($title) || empty($status)) {
-            $current_user = get_current_user();
+            $current_user = get_logged_in_user();
             $stats = get_ticket_stats($current_user['id']);
             
             $user_tickets = array_filter($tickets, function($ticket) use ($current_user) {
@@ -202,7 +202,7 @@ if ($request_method === 'POST') {
                 'description' => $description,
                 'status' => $status,
                 'priority' => $priority,
-                'userId' => get_current_user()['id']
+                'userId' => get_logged_in_user()['id']
             ];
             $tickets[] = $new_ticket;
             
@@ -236,7 +236,7 @@ if ($request_method === 'POST') {
         }
         echo $twig->render('dashboard.twig', [
             'title' => 'Dashboard - Ticket Management App',
-            'user' => get_current_user()
+            'user' => get_logged_in_user()
         ]);
     } elseif ($request_uri === '/tickets') {
         if (!is_authenticated()) {
@@ -244,7 +244,7 @@ if ($request_method === 'POST') {
             exit;
         }
         
-        $current_user = get_current_user();
+        $current_user = get_logged_in_user();
         $user_tickets = array_filter($tickets, function($ticket) use ($current_user) {
             return $ticket['userId'] == $current_user['id'];
         });
@@ -264,7 +264,7 @@ if ($request_method === 'POST') {
         }
         echo $twig->render('tickets/create.twig', [
             'title' => 'Create Ticket - Ticket Management App',
-            'user' => get_current_user()
+            'user' => get_logged_in_user()
         ]);
     } elseif (preg_match('/^\/tickets\/edit\/(\d+)$/', $request_uri, $matches)) {
         if (!is_authenticated()) {
@@ -273,7 +273,7 @@ if ($request_method === 'POST') {
         }
         
         $ticket_id = $matches[1];
-        $current_user = get_current_user();
+        $current_user = get_logged_in_user();
         
         // Find the ticket
         $ticket = null;
