@@ -25,7 +25,8 @@ app.use(
 
 // Twig template engine
 app.set("view engine", "twig");
-app.set("views", path.join(__dirname, "templates"));
+app.set("views", path.join(__dirname, "views")); // must match folder name
+twig.cache(false); // disable cache for deploy
 
 // Serve static assets
 app.use(express.static(path.join(__dirname, "public")));
@@ -67,7 +68,8 @@ app.post("/auth/login", (req, res) => {
 
 app.post("/auth/signup", (req, res) => {
   const { name, email, password } = req.body;
-  if (users.find((u) => u.email === email)) return res.render("auth/signup", { error: "User already exists" });
+  if (users.find((u) => u.email === email))
+    return res.render("auth/signup", { error: "User already exists" });
   const newUser = { id: users.length + 1, name, email, password };
   users.push(newUser);
   req.session.user = { id: newUser.id, name: newUser.name, email: newUser.email };
@@ -78,7 +80,7 @@ app.get("/auth/logout", (req, res) => {
   req.session.destroy(() => res.redirect("/"));
 });
 
-// Dashboard
+// Dashboard helper
 const getTicketStats = (userId) => {
   const userTickets = tickets.filter((t) => t.userId === userId);
   return {
@@ -89,6 +91,7 @@ const getTicketStats = (userId) => {
   };
 };
 
+// Dashboard
 app.get("/dashboard", requireAuth, (req, res) =>
   res.render("dashboard", { user: req.session.user, stats: getTicketStats(req.session.user.id) })
 );
@@ -103,11 +106,18 @@ app.get("/tickets", requireAuth, (req, res) => {
   });
 });
 
-app.get("/tickets/create", requireAuth, (req, res) => res.render("tickets/create", { user: req.session.user }));
+app.get("/tickets/create", requireAuth, (req, res) =>
+  res.render("tickets/create", { user: req.session.user })
+);
 
 app.post("/tickets/create", requireAuth, (req, res) => {
   const { title, description, status, priority } = req.body;
-  if (!title || !status) return res.render("tickets/create", { user: req.session.user, error: "Title and status are required" });
+  if (!title || !status)
+    return res.render("tickets/create", {
+      user: req.session.user,
+      error: "Title and status are required",
+    });
+
   tickets.push({
     id: (tickets.length + 1).toString(),
     title,
@@ -128,8 +138,15 @@ app.get("/tickets/edit/:id", requireAuth, (req, res) => {
 app.post("/tickets/edit/:id", requireAuth, (req, res) => {
   const index = tickets.findIndex((t) => t.id === req.params.id && t.userId === req.session.user.id);
   if (index === -1) return res.status(404).render("404");
+
   const { title, description, status, priority } = req.body;
-  if (!title || !status) return res.render("tickets/edit", { user: req.session.user, ticket: tickets[index], error: "Title and status are required" });
+  if (!title || !status)
+    return res.render("tickets/edit", {
+      user: req.session.user,
+      ticket: tickets[index],
+      error: "Title and status are required",
+    });
+
   tickets[index] = { ...tickets[index], title, description: description || "", status, priority: priority || "medium" };
   res.redirect("/tickets");
 });
