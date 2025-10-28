@@ -18,249 +18,152 @@ app.use(session({
   secret: 'ticketapp-secret-key',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } // Set to true in production with HTTPS
+  cookie: { secure: process.env.NODE_ENV === 'production' } // true only in production with HTTPS
 }));
 
-// Setup Twig template engine
+// Twig setup
 app.set("view engine", "twig");
 app.set("views", path.join(__dirname, "templates"));
 
-// Serve static assets (CSS, JS, images)
+// Static assets
 app.use(express.static(path.join(__dirname, "public")));
 
-// Simple in-memory stores for demo purposes (in production, use a database)
+// In-memory demo data
 let users = [
   { id: 1, name: 'John Doe', email: 'john@example.com', password: 'password123' },
   { id: 2, name: 'Jane Smith', email: 'jane@example.com', password: 'password123' }
 ];
 
-// Default tickets
 let tickets = [
-  { id: '1', title: 'Fix login page issue', description: 'Users are unable to login to the application after the recent update.', status: 'open', priority: 'high', userId: 1 },
-  { id: '2', title: 'Update documentation', description: 'Documentation needs to be updated to reflect the new API changes.', status: 'in_progress', priority: 'medium', userId: 1 },
-  { id: '3', title: 'Add dark mode feature', description: 'Implement a dark mode toggle for better user experience.', status: 'open', priority: 'low', userId: 2 }
+  { id: '1', title: 'Fix login page', description: 'Users cannot login', status: 'open', priority: 'high', userId: 1 },
+  { id: '2', title: 'Update docs', description: 'API docs need update', status: 'in_progress', priority: 'medium', userId: 1 },
+  { id: '3', title: 'Add dark mode', description: 'UX improvement', status: 'open', priority: 'low', userId: 2 }
 ];
 
-// Middleware to check if user is authenticated
+// Auth middleware
 const requireAuth = (req, res, next) => {
-  if (!req.session.user) {
-    return res.redirect('/auth/login');
-  }
+  if (!req.session.user) return res.redirect('/auth/login');
   next();
 };
 
+// Routes
 app.get("/", (req, res) => res.render("index"));
+
+// Auth routes
 app.get("/auth/login", (req, res) => res.render("auth/login"));
 app.get("/auth/signup", (req, res) => res.render("auth/signup"));
 
-// Login route
 app.post("/auth/login", (req, res) => {
   const { email, password } = req.body;
-  
-  // Find user by email
   const user = users.find(u => u.email === email && u.password === password);
-  
   if (user) {
-    // Store user info in session
-    req.session.user = {
-      email: user.email,
-      name: user.name
-    };
+    req.session.user = { id: user.id, email: user.email, name: user.name }; // include id!
     return res.redirect('/dashboard');
   } else {
-    res.render('auth/login', { error: 'Invalid credentials' });
+    return res.render('auth/login', { error: 'Invalid credentials' });
   }
 });
 
-// Signup route
 app.post("/auth/signup", (req, res) => {
   const { name, email, password } = req.body;
-  
-  // Check if user already exists
   const existingUser = users.find(u => u.email === email);
-  
-  if (existingUser) {
-    return res.render('auth/signup', { error: 'User already exists' });
-  }
-  
-  // Create new user
-  const newUser = {
-    id: users.length + 1,
-    name,
-    email,
-    password // In production, hash the password
-  };
-  
+  if (existingUser) return res.render('auth/signup', { error: 'User already exists' });
+
+  const newUser = { id: users.length + 1, name, email, password };
   users.push(newUser);
-  
-  // Store user info in session
-  req.session.user = {
-    email: newUser.email,
-    name: newUser.name
-  };
-  
-  res.redirect('/dashboard');
+  req.session.user = { id: newUser.id, email: newUser.email, name: newUser.name };
+  return res.redirect('/dashboard');
 });
 
-// Logout route
 app.get("/auth/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error('Error destroying session:', err);
-    }
+  req.session.destroy(err => {
+    if (err) console.error('Session destroy error:', err);
     res.redirect('/');
   });
 });
 
-// Calculate ticket stats
+// Dashboard
 const getTicketStats = (userId) => {
-  const userTickets = tickets.filter(ticket => ticket.userId == userId);
+  const userTickets = tickets.filter(t => t.userId === userId);
   return {
     total: userTickets.length,
-    open: userTickets.filter(ticket => ticket.status === 'open').length,
-    closed: userTickets.filter(ticket => ticket.status === 'closed').length
+    open: userTickets.filter(t => t.status === 'open').length,
+    closed: userTickets.filter(t => t.status === 'closed').length
   };
 };
 
-// Dashboard route
-app.get("/dashboard", requireAuth, (req, res) => res.render("dashboard", { 
-  user: req.session.user 
-}));
+app.get("/dashboard", requireAuth, (req, res) => {
+  const stats = getTicketStats(req.session.user.id);
+  res.render("dashboard", { user: req.session.user, stats });
+});
 
-// Ticket management routes
+// Ticket routes
 app.get("/tickets", requireAuth, (req, res) => {
   const userId = req.session.user.id;
-  const userTickets = tickets.filter(ticket => ticket.userId == userId);
+  const userTickets = tickets.filter(t => t.userId === userId);
   const stats = getTicketStats(userId);
-  res.render("tickets/list", { 
-    user: req.session.user,
-    tickets: userTickets,
-    stats: stats
-  });
+  res.render("tickets/list", { user: req.session.user, tickets: userTickets, stats });
 });
 
 app.get("/tickets/create", requireAuth, (req, res) => {
   res.render("tickets/create", { user: req.session.user });
 });
 
-// Create new ticket
 app.post("/tickets/create", requireAuth, (req, res) => {
   const { title, description, status, priority } = req.body;
-  const userId = req.session.user.id;
-  
-  // Basic validation
-  if (!title || !status) {
-    return res.render("tickets/create", { 
-      user: req.session.user,
-      error: 'Title and status are required' 
-    });
-  }
-  
-  // Create new ticket
-  const newTicket = {
+  if (!title || !status) return res.render("tickets/create", { user: req.session.user, error: 'Title and status are required' });
+
+  tickets.push({
     id: (tickets.length + 1).toString(),
     title,
     description: description || '',
     status,
     priority: priority || 'medium',
-    userId
-  };
-  
-  tickets.push(newTicket);
+    userId: req.session.user.id
+  });
   res.redirect('/tickets');
 });
 
 app.get("/tickets/edit/:id", requireAuth, (req, res) => {
-  const ticketId = req.params.id;
-  const userId = req.session.user.id;
-  const ticket = tickets.find(t => t.id === ticketId && t.userId == userId);
-  
-  if (!ticket) {
-    return res.status(404).send('Ticket not found');
-  }
-  
-  res.render("tickets/edit", { 
-    user: req.session.user,
-    ticket: ticket 
-  });
+  const ticket = tickets.find(t => t.id === req.params.id && t.userId === req.session.user.id);
+  if (!ticket) return res.status(404).send('Ticket not found');
+  res.render("tickets/edit", { user: req.session.user, ticket });
 });
 
-// Update ticket
 app.post("/tickets/edit/:id", requireAuth, (req, res) => {
-  const ticketId = req.params.id;
-  const userId = req.session.user.id;
-  const ticketIndex = tickets.findIndex(t => t.id === ticketId && t.userId == userId);
-  
-  if (ticketIndex === -1) {
-    return res.status(404).send('Ticket not found');
-  }
-  
+  const ticketIndex = tickets.findIndex(t => t.id === req.params.id && t.userId === req.session.user.id);
+  if (ticketIndex === -1) return res.status(404).send('Ticket not found');
+
   const { title, description, status, priority } = req.body;
-  
-  // Basic validation
-  if (!title || !status) {
-    const ticket = tickets[ticketIndex];
-    return res.render("tickets/edit", { 
-      user: req.session.user,
-      ticket: ticket,
-      error: 'Title and status are required' 
-    });
-  }
-  
-  // Update ticket
-  tickets[ticketIndex] = {
-    ...tickets[ticketIndex],
-    title,
-    description: description || '',
-    status,
-    priority: priority || 'medium'
-  };
-  
+  if (!title || !status) return res.render("tickets/edit", { user: req.session.user, ticket: tickets[ticketIndex], error: 'Title and status are required' });
+
+  tickets[ticketIndex] = { ...tickets[ticketIndex], title, description: description || '', status, priority: priority || 'medium' };
   res.redirect('/tickets');
 });
 
-// Update ticket via AJAX (for in-place editing)
+// AJAX routes
 app.post("/tickets/:id/update", requireAuth, (req, res) => {
-  const ticketId = req.params.id;
-  const userId = req.session.user.id;
-  const ticketIndex = tickets.findIndex(t => t.id === ticketId && t.userId == userId);
-  
-  if (ticketIndex === -1) {
-    return res.status(404).json({ error: 'Ticket not found' });
-  }
-  
+  const ticketIndex = tickets.findIndex(t => t.id === req.params.id && t.userId === req.session.user.id);
+  if (ticketIndex === -1) return res.status(404).json({ error: 'Ticket not found' });
+
   const { title, description, status, priority } = req.body;
-  
-  // Basic validation
-  if (!title || !status) {
-    return res.status(400).json({ error: 'Title and status are required' });
-  }
-  
-  // Update ticket
-  tickets[ticketIndex] = {
-    ...tickets[ticketIndex],
-    title,
-    description: description || '',
-    status,
-    priority: priority || 'medium'
-  };
-  
+  if (!title || !status) return res.status(400).json({ error: 'Title and status are required' });
+
+  tickets[ticketIndex] = { ...tickets[ticketIndex], title, description: description || '', status, priority: priority || 'medium' };
   res.json({ success: true, ticket: tickets[ticketIndex] });
 });
 
-// Delete ticket
 app.delete("/tickets/:id", requireAuth, (req, res) => {
-  const ticketId = req.params.id;
-  const userId = req.session.user.id;
-  const ticketIndex = tickets.findIndex(t => t.id === ticketId && t.userId == userId);
-  
-  if (ticketIndex === -1) {
-    return res.status(404).json({ error: 'Ticket not found' });
-  }
-  
+  const ticketIndex = tickets.findIndex(t => t.id === req.params.id && t.userId === req.session.user.id);
+  if (ticketIndex === -1) return res.status(404).json({ error: 'Ticket not found' });
+
   tickets.splice(ticketIndex, 1);
   res.json({ success: true });
 });
 
-const PORT = 4000;
+// Catch-all 404
+app.use((req, res) => res.status(404).render('404'));
+
+// Use dynamic port for Render
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
