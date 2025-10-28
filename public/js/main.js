@@ -173,8 +173,8 @@ function cancelDelete() {
 if (document.getElementById('confirmDeleteBtn')) {
   document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
     if (ticketToDelete) {
-      fetch(`/tickets/${ticketToDelete}`, {
-        method: 'DELETE',
+      fetch(`/tickets/delete/${ticketToDelete}`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         }

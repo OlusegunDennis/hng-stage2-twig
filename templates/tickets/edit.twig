@@ -12,7 +12,7 @@
   {% endif %}
 
   <div class="ticket-form-container">
-    <form method="POST" class="ticket-form">
+    <form method="POST" action="/tickets/edit/{{ ticket.id }}" class="ticket-form">
       <h2>Edit Ticket</h2>
       
       <div class="form-group">
