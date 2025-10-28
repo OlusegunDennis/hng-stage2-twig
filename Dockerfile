@@ -1,10 +1,18 @@
-FROM php:8.2-apache
-RUN apt-get update && apt-get install -y git unzip \
-    && docker-php-ext-install pdo pdo_mysql
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-WORKDIR /var/www/html/
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy all app files
 COPY . .
-RUN composer install --no-dev --optimize-autoloader
-RUN a2enmod rewrite
-EXPOSE 80
-CMD ["apache2-foreground"]
+
+# Expose port 4000
+EXPOSE 4000
+
+# Start the application
+CMD ["npm", "start"]
